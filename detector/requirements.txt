@@ -1,0 +1,6 @@
+pyyaml
+aiofiles
+aiohttp
+fastapi
+uvicorn
+psutil

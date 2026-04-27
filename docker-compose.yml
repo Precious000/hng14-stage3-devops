@@ -1,0 +1,50 @@
+services:
+  nextcloud:
+    image: kefaslungu/hng-nextcloud
+    restart: always
+    networks:
+      - app-net
+    volumes:
+      - nextcloud-data:/var/www/html
+      - hng-nginx-logs:/var/log/nginx:ro
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - hng-nginx-logs:/var/log/nginx
+    networks:
+      - app-net
+    depends_on:
+      - nextcloud
+      - detector
+
+  detector:
+    build: ./detector
+    restart: always
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8080:8080"
+    volumes:
+      - hng-nginx-logs:/var/log/nginx:ro
+      - detector-logs:/var/log/detector
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  nextcloud-data:
+  hng-nginx-logs:
+    name: HNG-nginx-logs
+  detector-logs:
